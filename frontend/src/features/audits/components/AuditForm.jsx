@@ -4,6 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { errorMessage } from '../../../api/client.js';
 import { groupsApi } from '../../../api/groups.api.js';
+import { notificationsApi } from '../../../api/notifications.api.js';
 import { usersApi } from '../../../api/users.api.js';
 import Alert from '../../../components/ui/Alert.jsx';
 import Button from '../../../components/ui/Button.jsx';
@@ -32,6 +33,7 @@ const schema = z.object({
   requiresValidation: z.boolean(),
   folderPath: z.string().trim().max(500).optional(),
   notes: z.string().trim().max(2000).optional(),
+  notificationRuleId: z.string().optional(),
   months: z.array(z.number()).optional(),
   propagateOwner: z.boolean().optional(),
 });
@@ -53,6 +55,7 @@ const toFormValues = (d) =>
         requiresValidation: d.requiresValidation,
         folderPath: d.folderPath ?? '',
         notes: d.notes ?? '',
+        notificationRuleId: d.notificationRuleId ?? '',
         propagateOwner: true,
       }
     : { year: currentYear(), executorType: 'INTERNAL', evidenceRequired: true, requiresValidation: true, months: [], requiredByText: '' };
@@ -72,6 +75,7 @@ function toBody(v, isEdit) {
     requiresValidation: v.requiresValidation,
     folderPath: v.folderPath || undefined,
     notes: v.notes || undefined,
+    notificationRuleId: v.notificationRuleId || null,
   };
   if (isEdit) return { ...body, propagateOwner: v.propagateOwner };
   return { ...body, year: v.year, months: v.months ?? [] };
@@ -83,6 +87,7 @@ export default function AuditForm({ initial, onSubmit, mutation, onCancel }) {
   const e = formState.errors;
   const groups = useQuery({ queryKey: qk.groups({ active: true }), queryFn: () => groupsApi.list({ active: 'true' }) });
   const users = useQuery({ queryKey: qk.usersLookup, queryFn: () => usersApi.lookup() });
+  const rules = useQuery({ queryKey: qk.notificationRules, queryFn: notificationsApi.rules });
   const ownerChanged = isEdit && watch('defaultOwnerUserId') !== (initial.defaultOwnerUserId?._id ?? initial.defaultOwnerUserId);
 
   return (
@@ -157,6 +162,9 @@ export default function AuditForm({ initial, onSubmit, mutation, onCancel }) {
           </div>
           <Field label="Carpeta de documentos (ruta de red)" error={e.folderPath?.message}>
             {(p) => <Input {...p} placeholder="\\America\esl\Team\..." {...register('folderPath')} />}
+          </Field>
+          <Field label="Regla de notificación" hint="Recordatorios y escalaciones de esta auditoría">
+            {(p) => <Select {...p} placeholder="Regla general" options={(rules.data ?? []).filter((r) => !r.isDefault && r.active).map((r) => ({ value: r._id, label: r.name }))} {...register('notificationRuleId')} />}
           </Field>
           <Field label="Notas" error={e.notes?.message}>
             {(p) => <Textarea {...p} {...register('notes')} />}

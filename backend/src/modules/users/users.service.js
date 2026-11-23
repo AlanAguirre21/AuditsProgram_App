@@ -7,6 +7,7 @@ import { AuditDefinition } from '../audits/auditDefinition.model.js';
 import { hashPassword, isAllowedEmail, publicUser } from '../auth/auth.service.js';
 import * as changelog from '../changelog/changelog.service.js';
 import { Group } from '../groups/group.model.js';
+import { notifyReassigned } from '../notifications/notifications.service.js';
 import { Occurrence } from '../occurrences/occurrence.model.js';
 import { User } from './user.model.js';
 
@@ -128,7 +129,7 @@ export async function reassign(fromId, { toUserId, reason, occurrenceIds, includ
   const filter = { ownerUserId: from._id, status: { $in: OPEN_STATUSES } };
   if (occurrenceIds?.length) filter._id = { $in: occurrenceIds };
 
-  return withTransaction(async (session) => {
+  const result = await withTransaction(async (session) => {
     const occs = await Occurrence.find(filter, { _id: 1 }).session(session ?? null).lean();
     for (const occ of occs) {
       await Occurrence.updateOne({ _id: occ._id }, { $set: { ownerUserId: to._id } }, { session });
@@ -161,7 +162,9 @@ export async function reassign(fromId, { toUserId, reason, occurrenceIds, includ
       }
       definitions = defs.length;
     }
-    // TODO(phase 2): notify the new owner by email with the list of occurrences (BR-51).
-    return { reassigned: occs.length, definitions };
+    return { reassigned: occs.length, definitions, occurrenceIds: occs.map((o) => o._id) };
   });
+  // BR-51: one Teams message to the new owner listing the occurrences (after commit).
+  notifyReassigned(to._id, result.occurrenceIds, reason);
+  return { reassigned: result.reassigned, definitions: result.definitions };
 }

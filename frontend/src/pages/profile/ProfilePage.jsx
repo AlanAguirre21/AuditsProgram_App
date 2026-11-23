@@ -24,6 +24,7 @@ export default function ProfilePage() {
   const { user, refresh, signIn } = useAuth();
   const [info, setInfo] = useState({ name: user.name, department: user.department ?? '', jobTitle: user.jobTitle ?? '', employeeNumber: user.employeeNumber ?? '' });
   const saveInfo = useMutation({ mutationFn: usersApi.updateMe, onSuccess: () => refresh() });
+  const savePrefs = useMutation({ mutationFn: usersApi.updateMe, onSuccess: () => refresh() });
   const pw = useForm({ resolver: zodResolver(pwSchema) });
   const changePw = useMutation({
     mutationFn: ({ confirm: _c, ...body }) => authApi.changePassword(body),
@@ -69,6 +70,28 @@ export default function ProfilePage() {
             <Field label="Confirmar" error={pw.formState.errors.confirm?.message}>{(p) => <Input {...p} type="password" autoComplete="new-password" {...pw.register('confirm')} />}</Field>
             <div className="flex justify-end"><Button type="submit" variant="primary" loading={changePw.isPending}>Cambiar contraseña</Button></div>
           </form>
+        </Card>
+        <Card title="Notificaciones" className="xl:col-span-2">
+          <div className="space-y-3 text-sm">
+            <p>
+              Recibes recordatorios, avisos de vencimiento y escalaciones como mensajes de <strong>Microsoft Teams</strong> (chat con «Workflows»). Este canal está siempre activo.
+            </p>
+            {user.features?.emailEnabled ? (
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-[var(--color-accent)]"
+                  checked={Boolean(user.notificationPrefs?.email)}
+                  disabled={savePrefs.isPending}
+                  onChange={(e) => savePrefs.mutate({ notificationPrefs: { email: e.target.checked } })}
+                />
+                Recibir también una copia por correo
+              </label>
+            ) : (
+              <p className="text-text-muted">La copia por correo está desactivada para toda la planta.</p>
+            )}
+            {savePrefs.error && <Alert tone="danger">{errorMessage(savePrefs.error)}</Alert>}
+          </div>
         </Card>
       </div>
     </>

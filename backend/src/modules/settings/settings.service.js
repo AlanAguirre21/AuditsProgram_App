@@ -13,6 +13,8 @@ export async function getSettings() {
 
 const EDITABLE = [
   'plantQualityManagerId',
+  'emailEnabled',
+  'qualityChannelEnabled',
   'dailyJobTime',
   'digestDayOfWeek',
   'digestTime',

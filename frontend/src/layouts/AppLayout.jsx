@@ -15,14 +15,14 @@ export default function AppLayout() {
       <Header onMenu={() => setMenuOpen(true)} />
       <div className="flex flex-1">
         <aside className="glass hidden w-60 shrink-0 border-r border-white/50 bg-white/35 lg:block">
-          <div className="sticky top-[57px]">
+          <div className="sticky top-[57px] h-[calc(100vh-57px)] overflow-y-auto overscroll-contain">
             <Sidebar />
           </div>
         </aside>
         {menuOpen && (
           <div className="fixed inset-0 z-40 lg:hidden">
             <div className="absolute inset-0 bg-slate-900/30" onClick={() => setMenuOpen(false)} aria-hidden="true" />
-            <aside className="glass absolute inset-y-0 left-0 w-64 bg-white/90 shadow-xl">
+            <aside className="glass absolute inset-y-0 left-0 w-64 overflow-y-auto overscroll-contain bg-white/90 shadow-xl">
               <Sidebar onNavigate={() => setMenuOpen(false)} />
             </aside>
           </div>

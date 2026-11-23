@@ -1,10 +1,11 @@
 import { env } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
+import { postToWorkflow } from './workflowWebhook.js';
 
 export const APP_NAME = 'Programa General de Auditorías';
 
 /**
- * Delivers a one-time code through a Teams Workflows (Power Automate) HTTP trigger.
+ * Delivers a one-time code through the 2FA Teams workflow.
  *
  * Contract (the workflow must accept exactly this):
  *   POST {TEAMS_2FA_WEBHOOK_URL}
@@ -21,22 +22,16 @@ export async function sendCode({ email, name, code, purpose, expiresInMinutes })
   if (!env.TEAMS_2FA_WEBHOOK_URL) {
     if (env.isProd) throw new Error('TEAMS_2FA_WEBHOOK_URL not configured');
     // Development fallback: the code is intentionally visible in the server console.
-    // eslint-disable-next-line no-console
     console.log(`\n[DEV 2FA] ${purpose} code for ${email}: ${code}  (valid ${expiresInMinutes} min)\n`);
     return { delivered: true, channel: 'DEV_LOG' };
   }
 
-  const res = await fetch(env.TEAMS_2FA_WEBHOOK_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': env.TEAMS_2FA_API_TOKEN },
-    body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(15_000),
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    logger.error({ status: res.status, body: text.slice(0, 300), email, purpose }, 'Teams 2FA workflow failed');
-    throw new Error(`Teams workflow responded ${res.status}`);
+  try {
+    // No retries: the user is waiting on the login screen and can press "Reenviar".
+    await postToWorkflow(env.TEAMS_2FA_WEBHOOK_URL, env.TEAMS_2FA_API_TOKEN, payload, { retry: false });
+  } catch (err) {
+    logger.error({ status: err.status, error: err.message, email, purpose }, 'Teams 2FA workflow failed');
+    throw err;
   }
   return { delivered: true, channel: 'TEAMS' };
 }

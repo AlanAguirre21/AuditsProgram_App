@@ -19,7 +19,12 @@ export const qk = {
   calendar: (year) => ['calendar', year],
   changelog: (filters) => ['changelog', filters],
   importPreview: (id) => ['import', id],
+  compliance: (year, groupBy) => ['compliance', year, groupBy],
+  notificationRules: ['notification-rules'],
+  notificationLog: (filters) => ['notification-log', filters],
+  occurrenceNotifications: (id) => ['occurrence', id, 'notifications'],
+  settings: ['settings'],
 };
 
 /** Prefixes invalidated after any occurrence mutation. */
-export const OCCURRENCE_RELATED = [['occurrence'], ['occurrences'], ['program'], ['dashboard'], ['validations'], ['audit'], ['audits']];
+export const OCCURRENCE_RELATED = [['occurrence'], ['occurrences'], ['program'], ['dashboard'], ['validations'], ['audit'], ['audits'], ['compliance']];

@@ -10,6 +10,8 @@ import { User } from '../users/user.model.js';
 import { computeKpis } from './kpi.js';
 
 const DEF_FIELDS = 'code name standard category requiredBy';
+
+export const currentYearInTz = () => yearOf(todayKey());
 const UPCOMING_DAYS = 30;
 
 const populate = (q) => q.populate('definitionId', DEF_FIELDS).populate('ownerUserId', 'name email').populate('ownerGroupId', 'name');

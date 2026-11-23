@@ -18,6 +18,10 @@ export async function history(req, res) {
   res.json({ data: await occurrences.history(req.params.id) });
 }
 
+export async function notifications(req, res) {
+  res.json({ data: await occurrences.notificationsFor(req.params.id, req.user) });
+}
+
 export async function update(req, res) {
   res.json({ data: await occurrences.updateOwner(req.params.id, req.body, req.user) });
 }

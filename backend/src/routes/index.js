@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
+import { workerHealth } from '../jobs/runtime.js';
 import { authenticate } from '../middleware/authenticate.js';
+import notificationsRoutes from '../modules/notifications/notifications.routes.js';
 import auditsRoutes from '../modules/audits/audits.routes.js';
 import authRoutes from '../modules/auth/auth.routes.js';
 import calendarRoutes from '../modules/calendar/calendar.routes.js';
@@ -17,13 +19,10 @@ import usersRoutes from '../modules/users/users.routes.js';
 const router = Router();
 
 // Public
-router.get('/health', (_req, res) => {
+router.get('/health', async (_req, res) => {
   const dbOk = mongoose.connection.readyState === 1;
-  res.status(dbOk ? 200 : 503).json({
-    api: 'ok',
-    db: dbOk ? 'ok' : 'down',
-    worker: { status: 'not_configured', lastRunAt: null }, // Phase 2: reads jobRuns
-  });
+  const worker = dbOk ? await workerHealth().catch(() => ({ status: 'unknown', lastRunAt: null })) : { status: 'unknown', lastRunAt: null };
+  res.status(dbOk ? 200 : 503).json({ api: 'ok', db: dbOk ? 'ok' : 'down', worker });
 });
 router.use('/auth', authRoutes);
 
@@ -41,5 +40,6 @@ router.use('/calendar', calendarRoutes);
 router.use('/imports', importsRoutes);
 router.use('/changelog', changelogRoutes);
 router.use('/settings', settingsRoutes);
+router.use('/notifications', notificationsRoutes);
 
 export default router;

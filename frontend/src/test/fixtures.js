@@ -73,6 +73,14 @@ export function route(method, url) {
   if (path === '/audits') return [{ ...def, occurrenceCounts: { REALIZADA: 1, PROGRAMADA: 2 } }];
   if (path.startsWith('/audits/')) return { ...def, occurrences: [occurrence()] };
   if (path === '/occurrences/mine') return [occurrence(), occurrence({ _id: id(103), status: 'REALIZADA', derived: null })];
+  if (/^\/occurrences\/[^/]+\/notifications$/.test(path)) return [{ _id: id(950), type: 'OVERDUE', level: 0, channel: 'TEAMS_CHAT', status: 'SENT', recipientId: { name: 'Ana Supervisor' }, createdAt: '2026-10-01T13:00:00Z', dryRun: true }];
+  if (path === '/notifications/rules') return [{ _id: id(80), name: 'Regla general', isDefault: true, active: true, reminderOffsetsDays: [14, 7, 3, 1], sendOnDueDate: true, overdueRepeatEveryDays: 1, escalationLevels: [{ level: 1, afterDaysOverdue: 3, target: 'MANAGER' }], includeGroupMembers: false, channels: ['TEAMS_CHAT', 'TEAMS_CHANNEL'] }];
+  if (path === '/notifications/log') return { __page: [{ _id: id(951), type: 'ESCALATION', level: 2, channel: 'TEAMS_CHANNEL', status: 'FAILED', attempts: 3, error: 'Workflow responded 401', recipientAddress: 'teams:quality-channel', createdAt: '2026-10-07T13:00:00Z' }] };
+  if (path === '/settings') return { _id: 'global', emailEnabled: false, qualityChannelEnabled: true, dailyJobTime: '07:00', digestDayOfWeek: 1, digestTime: '08:00', lateCompletionCountsAsCompliant: false, rescheduleAfterDueCountsAsLate: true };
+  if (path === '/reports/compliance') {
+    const rows = Array.from({ length: 12 }, (_, i) => ({ key: String(i + 1), label: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'][i], ...kpi(i < 10 ? 5 : 3, i < 10 ? 4 : 0, i === 1 ? 1 : 0, i < 10 ? 5 : 0) }));
+    return { year: 2026, groupBy: 'month', headline: 'onTime', rows, totals: kpi(56, 40, 1, 50) };
+  }
   if (/^\/occurrences\/[^/]+\/history$/.test(path)) return [{ _id: id(900), action: 'CREATE', at: '2026-01-06T12:00:00Z', userId: { name: 'Ana Supervisor' }, after: { status: 'PROGRAMADA' } }];
   if (path.startsWith('/occurrences/')) return occurrence();
   if (path === '/validations') return { completions: [occurrence({ status: 'EN_VALIDACION', derived: null })], reschedules: [] };

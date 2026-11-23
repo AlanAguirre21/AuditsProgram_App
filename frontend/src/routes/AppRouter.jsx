@@ -28,6 +28,10 @@ const GroupDetailPage = lazy(() => import('../pages/admin/GroupDetailPage.jsx'))
 const CalendarPage = lazy(() => import('../pages/admin/CalendarPage.jsx'));
 const ImportPage = lazy(() => import('../pages/admin/ImportPage.jsx'));
 const ChangeLogPage = lazy(() => import('../pages/admin/ChangeLogPage.jsx'));
+const NotificationRulesPage = lazy(() => import('../pages/admin/NotificationRulesPage.jsx'));
+const NotificationLogPage = lazy(() => import('../pages/admin/NotificationLogPage.jsx'));
+const SettingsPage = lazy(() => import('../pages/admin/SettingsPage.jsx'));
+const ReportsPage = lazy(() => import('../pages/reports/ReportsPage.jsx'));
 const ForbiddenPage = lazy(() => import('../pages/errors/ForbiddenPage.jsx'));
 const NotFoundPage = lazy(() => import('../pages/errors/NotFoundPage.jsx'));
 
@@ -67,6 +71,12 @@ export default function AppRouter() {
               <Route path="admin/calendar" element={<CalendarPage />} />
               <Route path="admin/import" element={<ImportPage />} />
               <Route path="admin/changelog" element={<ChangeLogPage />} />
+              <Route path="admin/notification-rules" element={<NotificationRulesPage />} />
+              <Route path="admin/notifications" element={<NotificationLogPage />} />
+              <Route path="admin/settings" element={<SettingsPage />} />
+            </Route>
+            <Route element={<RequireRole roles={[ADMIN, MANAGER]} />}>
+              <Route path="reports" element={<ReportsPage />} />
             </Route>
             <Route path="*" element={<NotFoundPage />} />
           </Route>

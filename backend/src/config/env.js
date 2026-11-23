@@ -24,10 +24,9 @@ const schema = z.object({
   TWO_FACTOR_CODE_TTL_MINUTES: z.coerce.number().int().positive().default(5),
   TWO_FACTOR_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
 
-  AZURE_TENANT_ID: z.string().optional().default(''),
-  AZURE_CLIENT_ID: z.string().optional().default(''),
-  AZURE_CLIENT_SECRET: z.string().optional().default(''),
-  GRAPH_MAILBOX: z.string().optional().default(''),
+  // Notifications workflow (reminders, escalations, events, digest; optional email copy).
+  TEAMS_NOTIFY_WEBHOOK_URL: z.string().optional().default(''),
+  TEAMS_NOTIFY_API_TOKEN: z.string().optional().default(''),
 
   LOCAL_STORAGE_PATH: z.string().default('./storage'),
   MAX_FILE_SIZE_MB: z.coerce.number().positive().default(20),

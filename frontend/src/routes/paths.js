@@ -19,5 +19,9 @@ export const PATHS = {
   adminCalendar: '/admin/calendar',
   adminImport: '/admin/import',
   adminChangelog: '/admin/changelog',
+  adminNotificationRules: '/admin/notification-rules',
+  adminNotifications: '/admin/notifications',
+  adminSettings: '/admin/settings',
+  reports: '/reports',
   forbidden: '/403',
 };

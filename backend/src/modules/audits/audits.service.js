@@ -174,6 +174,7 @@ const EDITABLE = [
   'requiresValidation',
   'folderPath',
   'notes',
+  'notificationRuleId',
 ];
 
 export async function update(id, body, actor) {

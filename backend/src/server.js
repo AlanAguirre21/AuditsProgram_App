@@ -1,3 +1,4 @@
+import './models.js';
 import { createApp } from './app.js';
 import { connectDb, disconnectDb } from './config/db.js';
 import { env } from './config/env.js';

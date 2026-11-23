@@ -12,4 +12,6 @@ export const importsApi = {
   createGroups: (id) => api.post(`/imports/${id}/create-groups`).then(unwrap),
   confirm: (id) => api.post(`/imports/${id}/confirm`).then(unwrap),
   discard: (id) => api.delete(`/imports/${id}`),
+  rolloverPreview: (body) => api.post('/imports/rollover/preview', body).then(unwrap),
+  rolloverConfirm: (body) => api.post('/imports/rollover/confirm', body).then(unwrap),
 };

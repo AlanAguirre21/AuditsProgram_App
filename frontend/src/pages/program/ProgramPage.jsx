@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { groupsApi } from '../../api/groups.api.js';
 import { errorMessage } from '../../api/client.js';
+import { useAuth } from '../../auth/useAuth.js';
+import ExportButtons from '../../features/reports/components/ExportButtons.jsx';
 import PageHeader from '../../components/PageHeader.jsx';
 import Alert from '../../components/ui/Alert.jsx';
 import Card from '../../components/ui/Card.jsx';
@@ -18,6 +20,7 @@ import es from '../../i18n/es.js';
 import { currentYear } from '../../utils/dates.js';
 
 export default function ProgramPage() {
+  const { hasRole } = useAuth();
   const [params, setParams] = useQueryParams();
   const year = Number(params.year) || currentYear();
   const filters = { category: params.category, requiredBy: params.requiredBy, ownerGroupId: params.ownerGroupId };
@@ -27,7 +30,7 @@ export default function ProgramPage() {
 
   return (
     <>
-      <PageHeader title={`Programa General de Auditorías ${year}`} subtitle={`Enero – Diciembre ${year}`} />
+      <PageHeader title={`Programa General de Auditorías ${year}`} subtitle={`Enero – Diciembre ${year}`} actions={hasRole('ADMIN', 'MANAGER') && <ExportButtons year={year} />} />
       <Card
         className="mb-4"
         bodyClassName="flex flex-wrap items-end gap-3 p-4"

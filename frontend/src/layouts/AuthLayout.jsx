@@ -15,7 +15,7 @@ export default function AuthLayout() {
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-6 flex flex-col items-center text-center">
-          <img src={ZfLogo} alt="ZF" className="neu-raised h-14 w-14 rounded-2xl bg-white p-1.5" />
+          <img src={ZfLogo} alt="ZF" className="h-14 w-14" />
           <h1 className="mt-4 text-xl font-semibold text-zf-blue">{es.appName}</h1>
           <p className="text-sm text-text-muted">{es.plant}</p>
         </div>

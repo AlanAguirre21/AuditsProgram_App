@@ -1,5 +1,6 @@
 import { AppError } from '../../utils/AppError.js';
 import * as imports from './imports.service.js';
+import * as rollover from './rollover.service.js';
 
 export async function preview(req, res) {
   if (!req.file) throw AppError.badRequest('Adjunta el archivo .xlsx (campo "file")');
@@ -23,6 +24,14 @@ export async function createGroups(req, res) {
 
 export async function confirm(req, res) {
   res.json({ data: await imports.confirm(req.params.id, req.user) });
+}
+
+export async function rolloverPreview(req, res) {
+  res.json({ data: await rollover.preview(req.body) });
+}
+
+export async function rolloverConfirm(req, res) {
+  res.json({ data: await rollover.confirm(req.body, req.user) });
 }
 
 export async function discard(req, res) {

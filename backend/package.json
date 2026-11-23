@@ -12,6 +12,9 @@
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "worker": "node src/worker.js",
+    "worker:dev": "node --watch src/worker.js",
+    "job:daily": "node src/worker.js --run daily",
+    "job:digest": "node src/worker.js --run digest",
     "seed": "node scripts/seed.js",
     "create-admin": "node scripts/createAdmin.js",
     "test": "vitest run",
@@ -29,7 +32,7 @@
     "jose": "^6.2.18",
     "mongoose": "^9.12.3",
     "multer": "^2.5.0",
-    "nodemailer": "^10.6.1",
+    "pdfkit": "^0.21.0",
     "pino": "^10.4.0",
     "pino-http": "^11.0.0",
     "zod": "^4.6.7"

@@ -12,8 +12,9 @@ const userSchema = new mongoose.Schema(
     roles: { type: [{ type: String, enum: ROLES }], default: [ROLE.VIEWER] },
     isQualitySupervisor: { type: Boolean, default: false },
     notificationPrefs: {
-      email: { type: Boolean, default: true },
-      teams: { type: Boolean, default: false },
+      /** Optional email copy (only when the global email switch is on). Teams chat is always on. */
+      email: { type: Boolean, default: false },
+      teams: { type: Boolean, default: true },
     },
     passwordHash: { type: String, select: false },
     passwordChangedAt: { type: Date },

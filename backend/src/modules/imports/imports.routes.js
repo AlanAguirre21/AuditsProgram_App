@@ -33,13 +33,18 @@ const patchBody = z.object({
   bulk: z.object({ ownerGroupId: objectId.optional(), defaultOwnerUserId: objectId.optional() }).optional(),
 });
 
+const yearField = z.number().int().min(2000).max(2100);
+const rolloverBody = z.object({ fromYear: yearField, toYear: yearField, force: z.boolean().optional() });
+
 router.use(authorize(ROLE.ADMIN));
 router.post('/excel/preview', uploadExcel, asyncHandler(ctrl.preview));
+// Declared before /:id routes so "rollover" is not taken as an id.
+router.post('/rollover/preview', validate({ body: rolloverBody }), asyncHandler(ctrl.rolloverPreview));
+router.post('/rollover/confirm', validate({ body: rolloverBody }), asyncHandler(ctrl.rolloverConfirm));
 router.get('/:id', id, asyncHandler(ctrl.get));
 router.patch('/:id', validate({ params: z.object({ id: objectId }), body: patchBody }), asyncHandler(ctrl.patch));
 router.post('/:id/create-groups', id, asyncHandler(ctrl.createGroups));
 router.post('/:id/confirm', id, asyncHandler(ctrl.confirm));
 router.delete('/:id', id, asyncHandler(ctrl.discard));
-// Phase 4: POST /rollover/preview, POST /rollover/confirm
 
 export default router;

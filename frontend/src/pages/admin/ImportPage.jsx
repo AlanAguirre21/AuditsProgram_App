@@ -17,6 +17,7 @@ import ImportPreviewTable from '../../features/imports/components/ImportPreviewT
 import IssueList from '../../features/imports/components/IssueList.jsx';
 import { useImportMutation, useImportPreview } from '../../features/imports/hooks/useImport.js';
 import YearSelector from '../../features/program/components/YearSelector.jsx';
+import RolloverForm from '../../features/imports/components/RolloverForm.jsx';
 import { useQueryParams } from '../../hooks/useQueryParams.js';
 import es from '../../i18n/es.js';
 import { PATHS } from '../../routes/paths.js';
@@ -53,7 +54,7 @@ export default function ImportPage() {
 
   return (
     <>
-      <PageHeader title="Importar programa desde Excel" subtitle="Carga el archivo «Programa General de Auditorías», revisa la vista previa, corrige y confirma." />
+      <PageHeader title="Importar programa desde Excel" subtitle="Carga el archivo «Programa General de Auditorías», revisa la vista previa, corrige y confirma. Abajo: cambio de año." />
       {err && <Alert tone="danger" className="mb-4">{errorMessage(err)}</Alert>}
 
       {result && (
@@ -139,6 +140,13 @@ export default function ImportPage() {
             />
           </Card>
         </div>
+      )}
+
+      {!importId && (
+        <Card title="Cambio de año" className="mt-5">
+          <p className="mb-4 text-sm text-text-muted">Copia las auditorías activas de un año al siguiente con fechas en los mismos meses. Úsalo cuando el programa del nuevo año no venga en Excel.</p>
+          <RolloverForm />
+        </Card>
       )}
     </>
   );

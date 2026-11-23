@@ -30,6 +30,8 @@ const definitionFields = {
   requiresValidation: z.boolean(),
   folderPath: z.string().trim().max(500).optional(),
   notes: z.string().trim().max(2000).optional(),
+  /** Overrides the default notification rule (null = use the default). */
+  notificationRuleId: objectId.nullable().optional(),
 };
 
 export const createBody = z.object({

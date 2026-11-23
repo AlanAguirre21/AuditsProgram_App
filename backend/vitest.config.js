@@ -15,6 +15,9 @@ export default defineConfig({
       ALLOWED_EMAIL_DOMAINS: 'zf.com',
       LOCAL_STORAGE_PATH: './tests/.storage',
       TEAMS_2FA_WEBHOOK_URL: '',
+      TEAMS_NOTIFY_WEBHOOK_URL: '',
+      NOTIFICATIONS_DRY_RUN: 'true',
+      APP_BASE_URL: 'https://auditorias.test',
     },
   },
 });

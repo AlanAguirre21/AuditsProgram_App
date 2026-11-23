@@ -12,6 +12,8 @@ const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Formato HH:mm');
 const patchBody = z
   .object({
     plantQualityManagerId: z.string().regex(/^[a-f\d]{24}$/i).nullable(),
+    emailEnabled: z.boolean(),
+    qualityChannelEnabled: z.boolean(),
     dailyJobTime: time,
     digestDayOfWeek: z.number().int().min(0).max(6),
     digestTime: time,

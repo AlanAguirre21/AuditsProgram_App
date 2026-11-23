@@ -10,6 +10,8 @@ import { AuditDefinition } from '../audits/auditDefinition.model.js';
 import * as changelog from '../changelog/changelog.service.js';
 import { Evidence } from '../evidence/evidence.model.js';
 import { Group } from '../groups/group.model.js';
+import { NOTIFICATION_TYPE as T } from '../../constants/notifications.js';
+import { forOccurrence, notifyEvent, notifyReassigned } from '../notifications/notifications.service.js';
 import { getSettings } from '../settings/settings.service.js';
 import { User } from '../users/user.model.js';
 import { completionStatus, decorate } from './occurrence.logic.js';
@@ -170,7 +172,7 @@ async function saveIfStatus(occ, _expectedStatus, session) {
 
 const snapshot = (occ, fields) => Object.fromEntries(fields.map((f) => [f, occ.get(f)]));
 
-export async function updateOwner(id, { ownerUserId, reason }, actor) {
+async function updateOwnerTx(id, { ownerUserId, reason }, actor) {
   return withTransaction(async (session) => {
     const occ = await load(id, session);
     if (!OPEN_STATUSES.includes(occ.status)) throw AppError.invalidTransition('Solo se puede reasignar una auditoría abierta');
@@ -182,12 +184,11 @@ export async function updateOwner(id, { ownerUserId, reason }, actor) {
     occ.ownerUserId = newOwner._id;
     await occ.save({ session });
     await changelog.record({ entity: 'AuditOccurrence', entityId: occ._id, action: 'REASSIGN', before, after: { ownerUserId: newOwner._id }, reason, user: actor, session });
-    // TODO(phase 2): email the new owner (spec 8.4).
     return occ.toObject();
   });
 }
 
-export async function complete(id, body, actor) {
+async function completeTx(id, body, actor) {
   return withTransaction(async (session) => {
     const occ = await load(id, session);
     await assertOwnerOrAdmin(occ, actor);
@@ -236,12 +237,11 @@ export async function complete(id, body, actor) {
       user: actor,
       session,
     });
-    // TODO(phase 2): VALIDATION_REQUEST email to quality supervisors (BR-15).
     return occ.toObject();
   });
 }
 
-export async function validate(id, actor) {
+async function validateTx(id, actor) {
   return withTransaction(async (session) => {
     const occ = await load(id, session);
     if (occ.status !== STATUS.EN_VALIDACION) assertTransition(occ.status, STATUS.REALIZADA, 'validar');
@@ -271,12 +271,11 @@ export async function validate(id, actor) {
       user: actor,
       session,
     });
-    // TODO(phase 2): VALIDATION_RESULT email to the owner.
     return occ.toObject();
   });
 }
 
-export async function reject(id, { comment }, actor) {
+async function rejectTx(id, { comment }, actor) {
   return withTransaction(async (session) => {
     const occ = await load(id, session);
     if (occ.status !== STATUS.EN_VALIDACION) throw AppError.invalidTransition('Solo se puede rechazar una auditoría en validación');
@@ -286,7 +285,6 @@ export async function reject(id, { comment }, actor) {
     occ.validation.rejections.push({ by: actor._id, at: new Date(), comment });
     await saveIfStatus(occ, STATUS.EN_VALIDACION, session);
     await changelog.record({ entity: 'AuditOccurrence', entityId: occ._id, action: 'REJECT', before, after: { status: STATUS.PROGRAMADA }, reason: comment, user: actor, session });
-    // TODO(phase 2): VALIDATION_RESULT email to the owner.
     return occ.toObject();
   });
 }
@@ -298,7 +296,7 @@ function assertRescheduleDate(occ, dateKey) {
   if (dateKey === toDateKey(occ.dueDate)) throw AppError.badRequest('La nueva fecha es igual a la fecha actual');
 }
 
-export async function requestReschedule(id, { requestedDate, reason }, actor) {
+async function requestRescheduleTx(id, { requestedDate, reason }, actor) {
   return withTransaction(async (session) => {
     const occ = await load(id, session);
     await assertOwnerOrAdmin(occ, actor);
@@ -324,7 +322,6 @@ export async function requestReschedule(id, { requestedDate, reason }, actor) {
       user: actor,
       session,
     });
-    // TODO(phase 2): RESCHEDULE_REQUEST email to quality supervisors.
     return occ.toObject();
   });
 }
@@ -342,7 +339,7 @@ async function applyReschedule(occ, { toKey, reason, requestedBy }, actor, sessi
   return { fromKey, afterDue };
 }
 
-export async function approveReschedule(id, actor) {
+async function approveRescheduleTx(id, actor) {
   return withTransaction(async (session) => {
     const occ = await load(id, session);
     if (occ.rescheduleRequest?.status !== RESCHEDULE_STATUS.PENDING) throw AppError.conflict('No hay una solicitud de reprogramación pendiente');
@@ -366,12 +363,11 @@ export async function approveReschedule(id, actor) {
       user: actor,
       session,
     });
-    // TODO(phase 2): RESCHEDULE_RESULT email to the owner.
     return occ.toObject();
   });
 }
 
-export async function rejectReschedule(id, { comment }, actor) {
+async function rejectRescheduleTx(id, { comment }, actor) {
   return withTransaction(async (session) => {
     const occ = await load(id, session);
     if (occ.rescheduleRequest?.status !== RESCHEDULE_STATUS.PENDING) throw AppError.conflict('No hay una solicitud de reprogramación pendiente');
@@ -394,7 +390,7 @@ export async function rejectReschedule(id, { comment }, actor) {
 }
 
 /** BR-31: an ADMIN reschedules directly (request + approval in one step). */
-export async function rescheduleDirect(id, { newDate, reason }, actor) {
+async function rescheduleDirectTx(id, { newDate, reason }, actor) {
   return withTransaction(async (session) => {
     const occ = await load(id, session);
     if (occ.status !== STATUS.PROGRAMADA) throw AppError.invalidTransition('Solo se puede reprogramar una auditoría PROGRAMADA');
@@ -472,4 +468,64 @@ export async function validationQueue() {
       .lean(),
   ]);
   return { completions: completions.map((o) => decorate(o, today)), reschedules: reschedules.map((o) => decorate(o, today)) };
+}
+
+// ---------------------------------------------------------------------------- event notifications (spec 8.4)
+// Each state change runs in its transaction first; the Teams notification is queued only after commit.
+
+export async function updateOwner(id, body, actor) {
+  const before = await Occurrence.findById(id, { ownerUserId: 1 }).lean();
+  const occ = await updateOwnerTx(id, body, actor);
+  if (before && String(before.ownerUserId) !== String(occ.ownerUserId)) notifyReassigned(occ.ownerUserId, [occ._id], body.reason);
+  return occ;
+}
+
+export async function complete(id, body, actor) {
+  const occ = await completeTx(id, body, actor);
+  if (occ.status === STATUS.EN_VALIDACION) notifyEvent(T.VALIDATION_REQUEST, occ._id);
+  return occ;
+}
+
+export async function validate(id, actor) {
+  const occ = await validateTx(id, actor);
+  notifyEvent(T.VALIDATION_RESULT, occ._id, { approved: true });
+  return occ;
+}
+
+export async function reject(id, body, actor) {
+  const occ = await rejectTx(id, body, actor);
+  notifyEvent(T.VALIDATION_RESULT, occ._id, { approved: false, comment: body.comment });
+  return occ;
+}
+
+export async function requestReschedule(id, body, actor) {
+  const occ = await requestRescheduleTx(id, body, actor);
+  notifyEvent(T.RESCHEDULE_REQUEST, occ._id, { requestedDate: body.requestedDate, reason: body.reason });
+  return occ;
+}
+
+export async function approveReschedule(id, actor) {
+  const occ = await approveRescheduleTx(id, actor);
+  notifyEvent(T.RESCHEDULE_RESULT, occ._id, { approved: true });
+  return occ;
+}
+
+export async function rejectReschedule(id, body, actor) {
+  const occ = await rejectRescheduleTx(id, body, actor);
+  notifyEvent(T.RESCHEDULE_RESULT, occ._id, { approved: false, comment: body.comment });
+  return occ;
+}
+
+/** The owner is told about a direct ADMIN reschedule as an approved one. */
+export async function rescheduleDirect(id, body, actor) {
+  const occ = await rescheduleDirectTx(id, body, actor);
+  notifyEvent(T.RESCHEDULE_RESULT, occ._id, { approved: true });
+  return occ;
+}
+
+export async function notificationsFor(id, user) {
+  const occ = await Occurrence.findById(id).lean();
+  if (!occ) throw AppError.notFound('Auditoría programada no encontrada');
+  if (!isAdmin(user) && !(await isOwner(occ, user))) throw AppError.forbidden();
+  return forOccurrence(id);
 }

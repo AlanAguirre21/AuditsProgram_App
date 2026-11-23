@@ -52,6 +52,8 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  const { flushNotifications } = await import('../../src/modules/notifications/notifications.service.js');
+  await flushNotifications();
   await mongoose.connection.db.dropDatabase();
   await mongoose.disconnect();
   await fs.rm('./tests/.storage', { recursive: true, force: true });

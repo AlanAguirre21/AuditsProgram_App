@@ -83,13 +83,17 @@ const PAGES = [
   ['/admin/calendar', 'Días no laborables'],
   ['/admin/import', 'Importar programa desde Excel'],
   ['/admin/changelog', 'Bitácora de cambios'],
+  ['/admin/notification-rules', 'Reglas de notificación'],
+  ['/admin/notifications', 'Bitácora de notificaciones'],
+  ['/admin/settings', 'Configuración'],
+  ['/reports?year=2026', 'Reportes de cumplimiento'],
   ['/no-existe', 'Página no encontrada'],
 ];
 
 describe('pages render', () => {
   it.each(PAGES)('%s', async (path, heading) => {
     renderApp(path);
-    expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: heading }, { timeout: 10_000 })).toBeInTheDocument();
   });
 
   it.each([

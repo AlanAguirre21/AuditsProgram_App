@@ -15,6 +15,7 @@ const MAIN = [
   { to: PATHS.program, label: es.nav.program, icon: 'grid', roles: ALL },
   { to: PATHS.audits, label: es.nav.audits, icon: 'book', roles: [ADMIN, MANAGER, VIEWER] },
   { to: PATHS.validations, label: es.nav.validations, icon: 'shield', roles: [ADMIN] },
+  { to: PATHS.reports, label: es.nav.reports, icon: 'chart', roles: [ADMIN, MANAGER] },
 ];
 
 const ADMIN_ITEMS = [
@@ -22,7 +23,10 @@ const ADMIN_ITEMS = [
   { to: PATHS.adminGroups, label: es.nav.groups, icon: 'group' },
   { to: PATHS.adminCalendar, label: es.nav.calendar, icon: 'calendar' },
   { to: PATHS.adminImport, label: es.nav.import, icon: 'upload' },
+  { to: PATHS.adminNotificationRules, label: es.nav.notificationRules, icon: 'bell' },
+  { to: PATHS.adminNotifications, label: es.nav.notifications, icon: 'send' },
   { to: PATHS.adminChangelog, label: es.nav.changelog, icon: 'history' },
+  { to: PATHS.adminSettings, label: es.nav.settings, icon: 'settings' },
 ];
 
 function Item({ to, label, icon, end, onNavigate }) {
@@ -48,8 +52,8 @@ export default function Sidebar({ onNavigate }) {
   const main = MAIN.filter((i) => hasRole(...i.roles));
   return (
     <nav aria-label="Menú principal" className="flex h-full flex-col gap-1 p-3">
-      <div className="mb-3 px-2 pt-1">
-        <img src={SfLogo} alt="SmartFactory" className="h-9 w-auto" />
+      <div className="mb-4 flex justify-center px-2 pt-2">
+        <img src={SfLogo} alt="SmartFactory" className="h-16 w-auto max-w-full" />
       </div>
       {main.map((i) => (
         <Item key={i.to} {...i} onNavigate={onNavigate} />

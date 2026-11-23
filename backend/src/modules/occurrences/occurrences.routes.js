@@ -15,6 +15,7 @@ router.get('/', validate({ query: v.listQuery }), asyncHandler(ctrl.list));
 router.get('/mine', validate({ query: v.listQuery }), asyncHandler(ctrl.mine));
 router.get('/:id', id, asyncHandler(ctrl.getDetail));
 router.get('/:id/history', id, asyncHandler(ctrl.history));
+router.get('/:id/notifications', id, asyncHandler(ctrl.notifications)); // owner or ADMIN (checked in service)
 router.patch('/:id', admin, validate({ params: v.idParams, body: v.updateBody }), asyncHandler(ctrl.update));
 
 // Ownership ("own") is checked in the service layer.

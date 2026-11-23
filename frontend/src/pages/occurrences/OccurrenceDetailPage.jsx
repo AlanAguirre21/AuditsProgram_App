@@ -11,6 +11,7 @@ import { FullPageSpinner } from '../../components/ui/Spinner.jsx';
 import CompleteOccurrenceModal from '../../features/occurrences/components/CompleteOccurrenceModal.jsx';
 import EvidenceList from '../../features/occurrences/components/EvidenceList.jsx';
 import HistoryTimeline from '../../features/occurrences/components/HistoryTimeline.jsx';
+import NotificationHistory from '../../features/occurrences/components/NotificationHistory.jsx';
 import OccurrenceActions from '../../features/occurrences/components/OccurrenceActions.jsx';
 import OccurrenceSummary from '../../features/occurrences/components/OccurrenceSummary.jsx';
 import ReasonModal from '../../features/occurrences/components/ReasonModal.jsx';
@@ -64,9 +65,16 @@ export default function OccurrenceDetailPage() {
             <EvidenceList occurrenceId={id} evidence={occ.evidence} canUpload={p.canUploadEvidence} canDelete={occ.status === 'PROGRAMADA'} currentUserId={user._id} isAdmin={p.isAdmin} />
           </Card>
         </div>
-        <Card title="Historial" className="h-fit">
-          {history.isLoading ? <FullPageSpinner /> : <HistoryTimeline entries={history.data} />}
-        </Card>
+        <div className="space-y-5">
+          <Card title="Historial" className="h-fit">
+            {history.isLoading ? <FullPageSpinner /> : <HistoryTimeline entries={history.data} />}
+          </Card>
+          {(p.isOwner || p.isAdmin) && (
+            <Card title="Notificaciones de Teams" className="h-fit">
+              <NotificationHistory occurrenceId={id} />
+            </Card>
+          )}
+        </div>
       </div>
 
       {modal === 'complete' && <CompleteOccurrenceModal open onClose={close} occ={occ} />}
