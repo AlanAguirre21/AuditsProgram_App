@@ -18,6 +18,10 @@ temp/
 # Logs
 logs/
 
+# Uploaded evidence (local storage)
+backend/storage/
+backend/tests/.storage/
+
 ### FILES ###
 
 # Environment variables
