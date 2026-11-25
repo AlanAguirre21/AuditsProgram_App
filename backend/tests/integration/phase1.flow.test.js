@@ -220,6 +220,16 @@ describe('program flow', () => {
     expect(log.body.meta.total).toBeGreaterThan(5);
   });
 
+  it('reopens a completed occurrence and records REOPEN with the previous completion', async () => {
+    const res = await api().post(`/api/v1/occurrences/${ids.occFuture}/reopen`).set(auth(tokens.admin1)).send({ reason: 'Se reabre para corregir el reporte' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.status).toBe('PROGRAMADA');
+    const hist = await api().get(`/api/v1/occurrences/${ids.occFuture}/history`).set(auth(tokens.admin1));
+    const reopen = hist.body.data.find((h) => h.action === 'REOPEN');
+    expect(reopen.before.status).toBe('REALIZADA');
+    expect(reopen.before.completion.performedAt).toBeTruthy();
+  });
+
   it('BR-50 blocks deactivating a user with open occurrences', async () => {
     const due = addDays(today, 40);
     const def = await api().post('/api/v1/audits').set(auth(tokens.admin1)).send({
@@ -243,7 +253,7 @@ describe('program flow', () => {
   it('owner home dashboard and program matrix', async () => {
     const dash = await api().get('/api/v1/reports/dashboard').set(auth(tokens.owner));
     expect(dash.status).toBe(200);
-    expect(dash.body.data.mine.recentDone.length).toBe(2);
+    expect(dash.body.data.mine.recentDone.length).toBe(1); // the other one was reopened above
     const prog = await api().get(`/api/v1/program/${yearOf(futureDue)}`).set(auth(tokens.viewer));
     expect(prog.status).toBe(200);
     expect(prog.body.data.rows.length).toBeGreaterThan(0);

@@ -445,7 +445,8 @@ export async function reopen(id, { reason }, actor) {
     const occ = await load(id, session);
     if (!TERMINAL_STATUSES.includes(occ.status)) throw AppError.invalidTransition('Solo se pueden reabrir auditorías cerradas');
     const from = occ.status;
-    const before = { status: from, completion: occ.completion, closure: occ.closure };
+    const plain = occ.toObject();
+    const before = { status: from, completion: plain.completion, closure: plain.closure };
     occ.status = STATUS.PROGRAMADA;
     occ.closure = undefined;
     occ.lastEscalationLevel = 0;

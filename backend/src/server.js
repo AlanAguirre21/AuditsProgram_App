@@ -3,9 +3,12 @@ import { createApp } from './app.js';
 import { connectDb, disconnectDb } from './config/db.js';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
+import { ensureAdmin } from './modules/users/ensureAdmin.js';
 
 async function main() {
   await connectDb();
+  if (env.ADMIN_EMAIL && env.ADMIN_PASSWORD) await ensureAdmin();
+  else logger.warn('ADMIN_EMAIL / ADMIN_PASSWORD are empty: the fixed admin account is not enforced.');
   const app = createApp();
   const server = app.listen(env.PORT, () => {
     logger.info(`API listening on http://localhost:${env.PORT}/api/v1`);

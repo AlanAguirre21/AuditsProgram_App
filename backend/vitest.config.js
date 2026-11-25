@@ -18,6 +18,10 @@ export default defineConfig({
       TEAMS_NOTIFY_WEBHOOK_URL: '',
       NOTIFICATIONS_DRY_RUN: 'true',
       APP_BASE_URL: 'https://auditorias.test',
+      // Never inherit the fixed admin / login alias from the developer's .env.
+      ADMIN_EMAIL: '',
+      ADMIN_USERNAME: '',
+      ADMIN_PASSWORD: '',
     },
   },
 });

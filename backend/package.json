@@ -18,7 +18,11 @@
     "seed": "node scripts/seed.js",
     "create-admin": "node scripts/createAdmin.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "seed:demo": "node scripts/seed.js --demo",
+    "dev:demo": "node --watch src/server.js --demo",
+    "worker:demo": "node src/worker.js --demo",
+    "create-admin:demo": "node scripts/createAdmin.js --demo"
   },
   "license": "UNLICENSED",
   "dependencies": {

@@ -28,6 +28,14 @@ const schema = z.object({
   TEAMS_NOTIFY_WEBHOOK_URL: z.string().optional().default(''),
   TEAMS_NOTIFY_API_TOKEN: z.string().optional().default(''),
 
+  // Fixed administrator account, enforced on every API start (see src/modules/users/ensureAdmin.js).
+  // ADMIN_EMAIL = the account's real email (receives the Teams codes and notifications).
+  // ADMIN_USERNAME = optional login alias for that account (e.g. admin@zf.com); it is not a user.
+  ADMIN_EMAIL: z.string().trim().toLowerCase().email().optional().or(z.literal('')).default(''),
+  ADMIN_USERNAME: z.string().trim().toLowerCase().optional().default(''),
+  ADMIN_NAME: z.string().trim().default('Administrador'),
+  ADMIN_PASSWORD: z.string().optional().default(''),
+
   LOCAL_STORAGE_PATH: z.string().default('./storage'),
   MAX_FILE_SIZE_MB: z.coerce.number().positive().default(20),
 
@@ -43,8 +51,29 @@ if (!parsed.success) {
 }
 
 const e = parsed.data;
+
+/**
+ * Demo mode (`--demo` on any entry point): same configuration, but a separate database
+ * (`<name>_demo`) and evidence folder, so sample data never mixes with real data.
+ */
+export const DEMO = process.argv.includes('--demo');
+export function demoUri(uri) {
+  const u = new URL(uri);
+  const db = u.pathname.replace(/^\//, '') || 'audits_program';
+  u.pathname = `/${db.endsWith('_demo') ? db : `${db}_demo`}`;
+  return u.toString();
+}
+if (DEMO) {
+  e.MONGO_URI = demoUri(e.MONGO_URI);
+  e.LOCAL_STORAGE_PATH = `${e.LOCAL_STORAGE_PATH.replace(/[\\/]+$/, '')}-demo`;
+}
+
 const origins = e.CLIENT_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean);
 
+if (e.NODE_ENV === 'production' && process.argv.includes('--demo')) {
+  console.error('--demo is not allowed in production.');
+  process.exit(1);
+}
 if (e.NODE_ENV === 'production' && !e.TEAMS_2FA_WEBHOOK_URL) {
   console.error('TEAMS_2FA_WEBHOOK_URL is required in production (2FA codes could not be delivered).');
   process.exit(1);
@@ -52,6 +81,7 @@ if (e.NODE_ENV === 'production' && !e.TEAMS_2FA_WEBHOOK_URL) {
 
 export const env = {
   ...e,
+  isDemo: DEMO,
   isProd: e.NODE_ENV === 'production',
   isTest: e.NODE_ENV === 'test',
   corsOrigins: origins,

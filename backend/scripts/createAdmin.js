@@ -1,53 +1,51 @@
 /**
- * Creates the first ADMIN, or promotes an existing user to ADMIN.
+ * Administrator accounts.
  *
- *   npm run create-admin -- --email ana.lopez@zf.com --name "Ana López" --password "S3gura-2026"
+ * 1) Fixed admin (no arguments): creates or repairs the account defined in .env
+ *    (ADMIN_EMAIL, ADMIN_NAME, ADMIN_PASSWORD; ADMIN_USERNAME is its login alias).
+ *    The API also does this on every start; use this to apply it without restarting.
+ *
+ *      npm run create-admin
+ *
+ * 2) Any other user: creates a new ADMIN, or promotes an existing user to ADMIN
+ *    (without --password an existing user keeps its password).
+ *
+ *      npm run create-admin -- --email ana.lopez@zf.com --name "Ana López" --password "S3gura-2026"
  */
 import { parseArgs } from 'node:util';
 import { connectDb, disconnectDb } from '../src/config/db.js';
-import { ROLE } from '../src/constants/roles.js';
-import { hashPassword } from '../src/modules/auth/auth.service.js';
-import * as changelog from '../src/modules/changelog/changelog.service.js';
+import { env } from '../src/config/env.js';
+import { ensureAdmin } from '../src/modules/users/ensureAdmin.js';
 import { User } from '../src/modules/users/user.model.js';
 
 const { values } = parseArgs({
-  options: { email: { type: 'string' }, name: { type: 'string' }, password: { type: 'string' } },
+  options: { email: { type: 'string' }, name: { type: 'string' }, password: { type: 'string' }, demo: { type: 'boolean' } },
 });
 
-if (!values.email) {
-  console.error('Usage: npm run create-admin -- --email <email> [--name <name> --password <password>]');
-  process.exit(1);
-}
-
-await connectDb();
-const email = values.email.toLowerCase();
-let user = await User.findOne({ email });
-
-if (user) {
-  if (!user.roles.includes(ROLE.ADMIN)) user.roles = [...new Set([...user.roles, ROLE.ADMIN, ROLE.OWNER])];
-  user.isQualitySupervisor = true;
-  user.active = true;
-  if (values.password) {
-    user.passwordHash = await hashPassword(values.password);
-    user.passwordChangedAt = new Date();
-    user.sessionVersion = (user.sessionVersion ?? 0) + 1;
-  }
-  await user.save();
-  console.log(`User ${email} is now ADMIN.`);
-} else {
-  if (!values.name || !values.password || values.password.length < 10) {
-    console.error('New user: --name and --password (min 10 characters) are required.');
+let opts = {};
+if (values.email) {
+  const email = values.email.toLowerCase().trim();
+  if (values.password !== undefined && (values.password.length < 10 || !/[A-Za-z]/.test(values.password) || !/\d/.test(values.password))) {
+    console.error('--password must have at least 10 characters, one letter and one number.');
     process.exit(1);
   }
-  user = await User.create({
-    email,
-    name: values.name,
-    roles: [ROLE.ADMIN, ROLE.OWNER],
-    isQualitySupervisor: true,
-    passwordHash: await hashPassword(values.password),
-    passwordChangedAt: new Date(),
-  });
-  console.log(`ADMIN ${email} created.`);
+  await connectDb();
+  const existing = await User.findOne({ email }).lean();
+  if (!existing && (!values.name || !values.password)) {
+    console.error('New user: --name and --password are required.');
+    await disconnectDb();
+    process.exit(1);
+  }
+  opts = { email, name: values.name ?? existing?.name, password: values.password ?? null };
+} else {
+  if (!env.ADMIN_EMAIL || !env.ADMIN_PASSWORD) {
+    console.error('Set ADMIN_EMAIL and ADMIN_PASSWORD in .env, or pass --email <email> [--name --password].');
+    process.exit(1);
+  }
+  await connectDb();
 }
-await changelog.record({ entity: 'User', entityId: user._id, action: 'UPDATE', after: { roles: user.roles }, reason: 'createAdmin script', system: true });
+
+const { user, changes } = await ensureAdmin(opts);
+const alias = !values.email && env.ADMIN_USERNAME ? ` (login: ${env.ADMIN_USERNAME})` : '';
+console.log(`ADMIN ${user.email}${alias}: ${changes.length ? changes.join(', ') : 'already up to date'}.`);
 await disconnectDb();

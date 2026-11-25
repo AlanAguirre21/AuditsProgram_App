@@ -27,7 +27,7 @@ Especificación: `Programa_General_Auditorias_SPEC.md` (no versionado).
 cd backend
 cp .env.example .env        # ajusta MONGO_URI, JWT_SECRET (≥32 caracteres), ALLOWED_EMAIL_DOMAINS
 npm install
-npm run create-admin -- --email nombre.apellido@zf.com --name "Nombre Apellido" --password "Clave-segura-2026"
+npm run create-admin        # opcional: el API ya crea/repara el administrador fijo de .env al arrancar
 npm run seed                # opcional: grupos del programa 2026 + usuarios demo (no producción)
 npm run dev                 # API  → http://localhost:3045/api/v1/health
 npm run worker:dev          # worker (otra terminal)
@@ -38,6 +38,11 @@ cp .env.example .env
 npm install
 npm run dev                 # http://localhost:5190  (proxy /api → 3045)
 ```
+
+### Administrador fijo
+`ADMIN_EMAIL`, `ADMIN_NAME` y `ADMIN_PASSWORD` en `.env` definen la cuenta de administrador, que el API **crea o repara en cada arranque**: roles Administrador + Responsable, supervisor de calidad, activa y con esa contraseña. Si alguien cambia la contraseña desde la app, vuelve a `ADMIN_PASSWORD` al reiniciar el API y las sesiones abiertas se cierran.
+`ADMIN_EMAIL` es el correo real de la cuenta: ahí llegan sus códigos de Teams y sus avisos. `ADMIN_USERNAME` (por ejemplo `admin@zf.com`) es solo el **nombre de usuario para iniciar sesión** en esa misma cuenta; no es otro usuario y nadie puede registrarlo.
+Para otros administradores: `npm run create-admin -- --email x@zf.com --name "Nombre" --password "Clave-2026-ok"`.
 
 En desarrollo, sin URLs de Teams: el código de 2FA se imprime en la consola del API y las notificaciones quedan **simuladas** (`NOTIFICATIONS_DRY_RUN=true`), visibles en *Administración → Notificaciones enviadas*.
 
@@ -111,8 +116,13 @@ Reinicia el servicio, ejecuta `mongosh --eval "rs.initiate()"` y agrega `?replic
 
 ## Pruebas
 
+**Cómo funciona la app por rol:** [docs/APP_WORKFLOW_BY_ROLE.md](docs/APP_WORKFLOW_BY_ROLE.md).
+
+**Pruebas manuales por rol:** `npm run seed:demo` + `npm run dev:demo` levantan una base de demostración separada (`<base>_demo`) con usuarios de todos los roles y auditorías en todos los estados. Lista de verificación completa en [docs/GUIA_DE_PRUEBAS.md](docs/GUIA_DE_PRUEBAS.md).
+
+**Pruebas automáticas:**
 ```bash
-cd backend  && npm test     # 78 pruebas: reglas de envío, KPI, parser, flujos HTTP, worker, exportaciones (BD auditsprogram_test, se borra)
+cd backend  && npm test     # 83 pruebas: reglas de envío, KPI, parser, flujos HTTP, worker, exportaciones (BD auditsprogram_test, se borra)
 cd frontend && npm test     # 31 pruebas: componentes y todas las páginas con datos simulados
 ```
 - `TEST_MONGO_URI` cambia la base de pruebas del backend. La prueba con el Excel real corre si existe `~/Downloads/Programa General de Auditorías.xlsx` (o `PROGRAM_XLSX`).

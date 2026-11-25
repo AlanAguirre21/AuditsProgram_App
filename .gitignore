@@ -20,7 +20,11 @@ logs/
 
 # Uploaded evidence (local storage)
 backend/storage/
+backend/storage-demo/
 backend/tests/.storage/
+
+# Others
+docs/
 
 ### FILES ###
 

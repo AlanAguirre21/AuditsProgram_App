@@ -17,7 +17,7 @@ import { startScheduler } from './jobs/scheduler.js';
 import { runYearClose } from './jobs/yearClose.job.js';
 import { isDateKey, todayKey } from './utils/dates.js';
 
-const { values } = parseArgs({ options: { run: { type: 'string' }, date: { type: 'string' }, year: { type: 'string' } } });
+const { values } = parseArgs({ options: { run: { type: 'string' }, date: { type: 'string' }, year: { type: 'string' }, demo: { type: 'boolean' } } });
 
 await connectDb();
 

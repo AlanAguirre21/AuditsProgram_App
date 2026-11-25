@@ -39,10 +39,20 @@ export function publicUser(user) {
   return rest;
 }
 
+/**
+ * Normalizes the email typed at login. ADMIN_USERNAME (e.g. admin@zf.com) is an alias of the
+ * fixed admin's real email (ADMIN_EMAIL), so codes always reach a real mailbox.
+ */
+export function resolveLoginEmail(email) {
+  const normalized = email.toLowerCase().trim();
+  return env.ADMIN_USERNAME && env.ADMIN_EMAIL && normalized === env.ADMIN_USERNAME ? env.ADMIN_EMAIL : normalized;
+}
+
 // ---------------------------------------------------------------------------- registration
 
 export async function register({ name, email, password, employeeNumber, department, jobTitle }) {
   const normalized = email.toLowerCase().trim();
+  if (env.ADMIN_USERNAME && normalized === env.ADMIN_USERNAME) throw AppError.duplicate('Ya existe una cuenta con ese correo');
   if (!isAllowedEmail(normalized)) {
     throw AppError.forbidden(`Solo se permiten correos de: ${env.allowedEmailDomains.map((d) => '@' + d).join(', ')}`);
   }
@@ -126,7 +136,7 @@ const challengeResponse = (challenge, user) => ({
 // ---------------------------------------------------------------------------- login
 
 export async function login({ email, password }, ip) {
-  const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+passwordHash');
+  const user = await User.findOne({ email: resolveLoginEmail(email) }).select('+passwordHash');
   // Compare even when the user doesn't exist, to keep timing uniform.
   const ok = await bcrypt.compare(password, user?.passwordHash || (await dummyHash()));
   if (!user || !user.passwordHash || !ok) throw new AppError(401, 'UNAUTHENTICATED', INVALID_CREDENTIALS);
@@ -164,7 +174,7 @@ export async function resendLogin({ challengeId }, ip) {
 
 /** Always answers the same way, so it can't be used to discover registered emails. */
 export async function forgotPassword({ email }, ip) {
-  const user = await User.findOne({ email: email.toLowerCase().trim(), active: true });
+  const user = await User.findOne({ email: resolveLoginEmail(email), active: true });
   if (user) {
     const last = await TwoFactorChallenge.findOne({ userId: user._id, purpose: 'PASSWORD_RESET' }).sort({ createdAt: -1 });
     if (!last || Date.now() - last.sentAt.getTime() >= RESEND_COOLDOWN_MS) {
@@ -175,7 +185,7 @@ export async function forgotPassword({ email }, ip) {
 }
 
 export async function resetPassword({ email, code, password }) {
-  const user = await User.findOne({ email: email.toLowerCase().trim(), active: true });
+  const user = await User.findOne({ email: resolveLoginEmail(email), active: true });
   const challenge = user
     ? await TwoFactorChallenge.findOne({ userId: user._id, purpose: 'PASSWORD_RESET', consumedAt: null }).sort({ createdAt: -1 })
     : null;

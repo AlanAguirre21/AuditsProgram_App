@@ -7,7 +7,8 @@ const normalize = (v) => {
   if (v instanceof Date) return v.toISOString();
   if (Array.isArray(v)) return v.map(normalize);
   if (v && typeof v === 'object' && !(v instanceof Buffer)) {
-    const src = typeof v.toObject === 'function' ? v.toObject() : v;
+    // Mongoose nested paths may expose a toObject() that returns undefined: fall back to the value.
+    const src = (typeof v.toObject === 'function' ? v.toObject() : v) ?? v;
     return Object.fromEntries(Object.entries(src).map(([k, x]) => [k, normalize(x)]));
   }
   return v;

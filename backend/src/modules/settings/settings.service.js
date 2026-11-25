@@ -8,7 +8,7 @@ export const SETTINGS_ENTITY_ID = new mongoose.Types.ObjectId('00000000000000000
 export async function getSettings() {
   const doc = await Settings.findById(SETTINGS_ID).lean();
   if (doc) return doc;
-  return Settings.findOneAndUpdate({ _id: SETTINGS_ID }, {}, { upsert: true, new: true, setDefaultsOnInsert: true }).lean();
+  return Settings.findOneAndUpdate({ _id: SETTINGS_ID }, {}, { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }).lean();
 }
 
 const EDITABLE = [
@@ -28,7 +28,7 @@ export async function updateSettings(patch, user) {
   const update = Object.fromEntries(Object.entries(patch).filter(([k]) => EDITABLE.includes(k)));
   const d = changelog.diff(current, update, Object.keys(update));
   if (!d.changed) return current;
-  const updated = await Settings.findByIdAndUpdate(SETTINGS_ID, { $set: update }, { new: true }).lean();
+  const updated = await Settings.findByIdAndUpdate(SETTINGS_ID, { $set: update }, { returnDocument: 'after' }).lean();
   await changelog.record({ entity: 'Settings', entityId: SETTINGS_ENTITY_ID, action: 'UPDATE', before: d.before, after: d.after, user });
   return updated;
 }

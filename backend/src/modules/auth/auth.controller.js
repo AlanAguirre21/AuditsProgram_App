@@ -1,3 +1,4 @@
+import { env } from '../../config/env.js';
 import { Group } from '../groups/group.model.js';
 import { getSettings } from '../settings/settings.service.js';
 import * as auth from './auth.service.js';
@@ -33,5 +34,5 @@ export async function changePassword(req, res) {
 export async function me(req, res) {
   const [groups, settings] = await Promise.all([Group.find({ memberIds: req.user._id, active: true }, { name: 1 }).lean(), getSettings()]);
   // `features` lets the UI show options that depend on global settings (e.g. the email copy).
-  res.json({ data: { ...auth.publicUser(req.user), groups, features: { emailEnabled: Boolean(settings.emailEnabled) } } });
+  res.json({ data: { ...auth.publicUser(req.user), groups, features: { emailEnabled: Boolean(settings.emailEnabled), demo: env.isDemo } } });
 }

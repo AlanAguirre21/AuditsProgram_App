@@ -1,3 +1,4 @@
+import { env } from '../../config/env.js';
 import { withTransaction } from '../../config/db.js';
 import { ROLE } from '../../constants/roles.js';
 import { OPEN_STATUSES } from '../../constants/statuses.js';
@@ -51,7 +52,7 @@ export async function getById(id) {
 export async function create(data, actor) {
   const email = data.email.toLowerCase();
   if (!isAllowedEmail(email)) throw AppError.badRequest('El dominio del correo no está permitido');
-  if (await User.exists({ email })) throw AppError.duplicate('Ya existe un usuario con ese correo');
+  if ((env.ADMIN_USERNAME && email === env.ADMIN_USERNAME) || (await User.exists({ email }))) throw AppError.duplicate('Ya existe un usuario con ese correo');
   const user = await User.create({
     ...data,
     email,

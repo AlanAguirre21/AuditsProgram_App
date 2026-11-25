@@ -27,6 +27,11 @@ export default function Header({ onMenu }) {
           <p className="text-sm font-semibold text-zf-blue">{es.appName}</p>
           <p className="hidden text-[11px] text-text-muted sm:block">{es.plant}</p>
         </div>
+        {user?.features?.demo && (
+          <span className="rounded-full bg-warning px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white" title="Base de datos de demostración">
+            Datos de prueba
+          </span>
+        )}
       </div>
       <div className="flex items-center gap-2">
         <Link to={PATHS.profile} className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">
