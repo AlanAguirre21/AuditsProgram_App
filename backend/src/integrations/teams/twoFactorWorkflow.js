@@ -1,5 +1,6 @@
 import { env } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
+import { getBrandLogoDataUri } from './brandLogo.js';
 import { postToWorkflow } from './workflowWebhook.js';
 
 export const APP_NAME = 'Programa General de Auditorías';
@@ -12,13 +13,13 @@ export const APP_NAME = 'Programa General de Auditorías';
  *   Headers: Content-Type: application/json
  *            x-api-key: {TEAMS_2FA_API_TOKEN}
  *   Body:    { email, name, code, purpose: 'LOGIN' | 'PASSWORD_RESET', expiresInMinutes, appName,
- *              logoUrl (BRAND_LOGO_URL, or null when not configured) }
+ *              logoUrl (embedded PNG "data:image/png;base64,…" from BRAND_LOGO_PATH, or null) }
  *   Success: any 2xx status.
  *
  * Without a webhook URL (development/test only) the code is written to the server log instead.
  */
 export async function sendCode({ email, name, code, purpose, expiresInMinutes }) {
-  const payload = { email, name, code, purpose, expiresInMinutes, appName: APP_NAME, logoUrl: env.BRAND_LOGO_URL || null };
+  const payload = { email, name, code, purpose, expiresInMinutes, appName: APP_NAME, logoUrl: getBrandLogoDataUri() };
 
   if (!env.TEAMS_2FA_WEBHOOK_URL) {
     if (env.isProd) throw new Error('TEAMS_2FA_WEBHOOK_URL not configured');

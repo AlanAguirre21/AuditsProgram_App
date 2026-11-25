@@ -28,8 +28,9 @@ const schema = z.object({
   TEAMS_NOTIFY_WEBHOOK_URL: z.string().optional().default(''),
   TEAMS_NOTIFY_API_TOKEN: z.string().optional().default(''),
 
-  // Brand logo shown in the Teams cards (PNG/JPG; Teams does not render SVG). Empty = no logo.
-  BRAND_LOGO_URL: z.string().trim().url().optional().or(z.literal('')).default(''),
+  // PNG logo embedded in the Teams cards, relative to backend/ (see integrations/teams/brandLogo.js).
+  // Empty = cards without logo.
+  BRAND_LOGO_PATH: z.string().trim().default('../frontend/public/ZF-Logo.png'),
 
   // Fixed administrator account, enforced on every API start (see src/modules/users/ensureAdmin.js).
   // ADMIN_EMAIL = the account's real email (receives the Teams codes and notifications).

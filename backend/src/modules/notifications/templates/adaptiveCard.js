@@ -3,7 +3,7 @@
  * Same visual language as the 2FA card: ZF logo, "ZF Group · app" header, a tone-coloured
  * band with title + summary, details in an emphasis box, primary button, subtle footer.
  */
-import { env } from '../../../config/env.js';
+import { getBrandLogoDataUri } from '../../../integrations/teams/brandLogo.js';
 
 const MAX_ITEMS = 15;
 const BRAND_NAME = 'ZF Group';
@@ -20,9 +20,9 @@ const TONES = {
 export function toAdaptiveCard(msg) {
   const tone = TONES[msg.tone] ?? TONES.attention;
 
+  const logo = getBrandLogoDataUri(); // embedded PNG from BRAND_LOGO_PATH, or null
   const body = [
-    // Logo from BRAND_LOGO_URL (.env); omitted when not configured.
-    ...(env.BRAND_LOGO_URL ? [{ type: 'Image', url: env.BRAND_LOGO_URL, height: '40px', altText: BRAND_NAME, horizontalAlignment: 'Left' }] : []),
+    ...(logo ? [{ type: 'Image', url: logo, height: '40px', altText: BRAND_NAME, horizontalAlignment: 'Left' }] : []),
     { type: 'TextBlock', text: `${BRAND_NAME} · ${APP_NAME}`, size: 'Small', isSubtle: true, wrap: true, spacing: 'Small' },
     {
       type: 'Container',
