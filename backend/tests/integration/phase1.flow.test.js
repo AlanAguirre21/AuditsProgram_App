@@ -6,9 +6,16 @@ import fs from 'node:fs/promises';
 import mongoose from 'mongoose';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { createApp } from '../../src/app.js';
+import { connectDb } from '../../src/config/db.js';
+import { hashPassword } from '../../src/modules/auth/auth.service.js';
+import { flushNotifications } from '../../src/modules/notifications/notifications.service.js';
+import { User } from '../../src/modules/users/user.model.js';
+import { addDays, todayKey, yearOf } from '../../src/utils/dates.js';
 import { buildTemplate } from '../fixtures/buildTemplate.js';
 
-const codes = new Map();
+// vi.mock is hoisted above the imports; vi.hoisted makes `codes` available to its factory.
+const codes = vi.hoisted(() => new Map());
 vi.mock('../../src/integrations/teams/twoFactorWorkflow.js', () => ({
   APP_NAME: 'test',
   sendCode: vi.fn(async ({ email, code, purpose }) => {
@@ -16,12 +23,6 @@ vi.mock('../../src/integrations/teams/twoFactorWorkflow.js', () => ({
     return { delivered: true, channel: 'TEST' };
   }),
 }));
-
-const { createApp } = await import('../../src/app.js');
-const { connectDb } = await import('../../src/config/db.js');
-const { hashPassword } = await import('../../src/modules/auth/auth.service.js');
-const { User } = await import('../../src/modules/users/user.model.js');
-const { addDays, todayKey, yearOf } = await import('../../src/utils/dates.js');
 
 const PASSWORD = 'Prueba-2026-ok';
 let app;
@@ -52,7 +53,6 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  const { flushNotifications } = await import('../../src/modules/notifications/notifications.service.js');
   await flushNotifications();
   await mongoose.connection.db.dropDatabase();
   await mongoose.disconnect();

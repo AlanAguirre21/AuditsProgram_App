@@ -5,8 +5,14 @@
 import mongoose from 'mongoose';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { createApp } from '../../src/app.js';
+import { connectDb } from '../../src/config/db.js';
+import { env } from '../../src/config/env.js';
+import { ensureAdmin } from '../../src/modules/users/ensureAdmin.js';
+import { User } from '../../src/modules/users/user.model.js';
 
-const sent = [];
+// vi.mock is hoisted above the imports; vi.hoisted makes `sent` available to its factory.
+const sent = vi.hoisted(() => []);
 vi.mock('../../src/integrations/teams/twoFactorWorkflow.js', () => ({
   APP_NAME: 'test',
   sendCode: vi.fn(async (payload) => {
@@ -14,12 +20,6 @@ vi.mock('../../src/integrations/teams/twoFactorWorkflow.js', () => ({
     return { delivered: true, channel: 'TEST' };
   }),
 }));
-
-const { env } = await import('../../src/config/env.js');
-const { createApp } = await import('../../src/app.js');
-const { connectDb } = await import('../../src/config/db.js');
-const { ensureAdmin } = await import('../../src/modules/users/ensureAdmin.js');
-const { User } = await import('../../src/modules/users/user.model.js');
 
 const ADMIN = { email: 'persona.real@zf.com', username: 'admin@zf.com', name: 'Administrador', password: 'clave-admin-123' };
 let app;

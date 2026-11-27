@@ -6,8 +6,20 @@ import ExcelJS from 'exceljs';
 import mongoose from 'mongoose';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { createApp } from '../../src/app.js';
+import { connectDb } from '../../src/config/db.js';
+import { AuditDefinition } from '../../src/modules/audits/auditDefinition.model.js';
+import { hashPassword } from '../../src/modules/auth/auth.service.js';
+import { Group } from '../../src/modules/groups/group.model.js';
+import { mapDueDate } from '../../src/modules/imports/rollover.service.js';
+import { NotificationLog } from '../../src/modules/notifications/notificationLog.model.js';
+import { flushNotifications } from '../../src/modules/notifications/notifications.service.js';
+import { Occurrence } from '../../src/modules/occurrences/occurrence.model.js';
+import { User } from '../../src/modules/users/user.model.js';
+import { parseDateKey } from '../../src/utils/dates.js';
 
-const codes = new Map();
+// vi.mock is hoisted above the imports; vi.hoisted makes `codes` available to its factory.
+const codes = vi.hoisted(() => new Map());
 vi.mock('../../src/integrations/teams/twoFactorWorkflow.js', () => ({
   APP_NAME: 'test',
   sendCode: vi.fn(async ({ email, code }) => {
@@ -15,18 +27,6 @@ vi.mock('../../src/integrations/teams/twoFactorWorkflow.js', () => ({
     return { delivered: true };
   }),
 }));
-
-const { createApp } = await import('../../src/app.js');
-const { connectDb } = await import('../../src/config/db.js');
-const { hashPassword } = await import('../../src/modules/auth/auth.service.js');
-const { User } = await import('../../src/modules/users/user.model.js');
-const { Group } = await import('../../src/modules/groups/group.model.js');
-const { AuditDefinition } = await import('../../src/modules/audits/auditDefinition.model.js');
-const { Occurrence } = await import('../../src/modules/occurrences/occurrence.model.js');
-const { NotificationLog } = await import('../../src/modules/notifications/notificationLog.model.js');
-const { flushNotifications } = await import('../../src/modules/notifications/notifications.service.js');
-const { parseDateKey } = await import('../../src/utils/dates.js');
-const { mapDueDate } = await import('../../src/modules/imports/rollover.service.js');
 
 const PASSWORD = 'Prueba-2026-ok';
 let app;

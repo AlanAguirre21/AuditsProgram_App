@@ -8,32 +8,33 @@
  * transitions, change log, evidence files) relative to today's date, then the daily
  * notifications job and the weekly digest run in dry-run mode.
  */
-if (!process.argv.includes('--demo')) process.argv.push('--demo');
-process.env.NOTIFICATIONS_DRY_RUN = 'true';
+// Must stay the first import: it forces --demo before src/config/env.js is evaluated.
+import './forceDemoMode.js';
 
-const { default: PDFDocument } = await import('pdfkit');
-const mongoose = (await import('mongoose')).default;
-await import('../src/models.js');
-const { env } = await import('../src/config/env.js');
-const { connectDb, disconnectDb } = await import('../src/config/db.js');
-const { ROLE } = await import('../src/constants/roles.js');
-const { hashPassword } = await import('../src/modules/auth/auth.service.js');
-const { User } = await import('../src/modules/users/user.model.js');
-const { Group } = await import('../src/modules/groups/group.model.js');
-const { NonWorkingDay } = await import('../src/modules/calendar/calendar.model.js');
-const { Settings } = await import('../src/modules/settings/settings.model.js');
-const { Occurrence } = await import('../src/modules/occurrences/occurrence.model.js');
-const { NotificationRule } = await import('../src/modules/notifications/notificationRule.model.js');
-const audits = await import('../src/modules/audits/audits.service.js');
-const occurrences = await import('../src/modules/occurrences/occurrences.service.js');
-const evidence = await import('../src/modules/evidence/evidence.service.js');
-const { flushNotifications, getDefaultRule } = await import('../src/modules/notifications/notifications.service.js');
-const changelog = await import('../src/modules/changelog/changelog.service.js');
-const { runJob } = await import('../src/jobs/runtime.js');
-const { runDailyNotifications } = await import('../src/jobs/notifications.job.js');
-const { runWeeklyDigest } = await import('../src/jobs/digest.job.js');
-const { addDays, lastWorkingDayOfMonth, nextWorkingDay, parseDateKey, previousWorkingDay, todayKey, toDateKey, yearOf } = await import('../src/utils/dates.js');
-const { derivedState } = await import('../src/modules/occurrences/occurrence.logic.js');
+import mongoose from 'mongoose';
+import PDFDocument from 'pdfkit';
+import '../src/models.js';
+import { env } from '../src/config/env.js';
+import { connectDb, disconnectDb } from '../src/config/db.js';
+import { ROLE } from '../src/constants/roles.js';
+import { hashPassword } from '../src/modules/auth/auth.service.js';
+import { User } from '../src/modules/users/user.model.js';
+import { Group } from '../src/modules/groups/group.model.js';
+import { NonWorkingDay } from '../src/modules/calendar/calendar.model.js';
+import { nonWorkingSet } from '../src/modules/calendar/calendar.service.js';
+import { Settings } from '../src/modules/settings/settings.model.js';
+import { Occurrence } from '../src/modules/occurrences/occurrence.model.js';
+import { NotificationRule } from '../src/modules/notifications/notificationRule.model.js';
+import * as audits from '../src/modules/audits/audits.service.js';
+import * as occurrences from '../src/modules/occurrences/occurrences.service.js';
+import * as evidence from '../src/modules/evidence/evidence.service.js';
+import { flushNotifications, getDefaultRule } from '../src/modules/notifications/notifications.service.js';
+import * as changelog from '../src/modules/changelog/changelog.service.js';
+import { runJob } from '../src/jobs/runtime.js';
+import { runDailyNotifications } from '../src/jobs/notifications.job.js';
+import { runWeeklyDigest } from '../src/jobs/digest.job.js';
+import { addDays, lastWorkingDayOfMonth, nextWorkingDay, parseDateKey, previousWorkingDay, todayKey, toDateKey, yearOf } from '../src/utils/dates.js';
+import { derivedState } from '../src/modules/occurrences/occurrence.logic.js';
 
 if (env.isProd) {
   console.error('seed must not run in production.');
@@ -66,7 +67,6 @@ const HOLIDAYS = [
   ['12-25', 'Navidad'],
 ];
 await NonWorkingDay.insertMany([PY, Y].flatMap((y) => HOLIDAYS.map(([md, description]) => ({ date: parseDateKey(`${y}-${md}`), description, year: y }))));
-const { nonWorkingSet } = await import('../src/modules/calendar/calendar.service.js');
 const nw = await nonWorkingSet([PY, Y, Y + 1]);
 
 /** A working day `offset` days from today, kept inside the current year. */

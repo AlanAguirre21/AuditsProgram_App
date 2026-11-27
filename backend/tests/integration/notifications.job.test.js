@@ -12,6 +12,7 @@ import { runWeeklyDigest } from '../../src/jobs/digest.job.js';
 import { AuditDefinition } from '../../src/modules/audits/auditDefinition.model.js';
 import { Group } from '../../src/modules/groups/group.model.js';
 import { NotificationLog } from '../../src/modules/notifications/notificationLog.model.js';
+import { NotificationRule } from '../../src/modules/notifications/notificationRule.model.js';
 import { Occurrence } from '../../src/modules/occurrences/occurrence.model.js';
 import { Settings } from '../../src/modules/settings/settings.model.js';
 import { User } from '../../src/modules/users/user.model.js';
@@ -93,7 +94,6 @@ describe('daily notifications job', () => {
 
   it('adds the optional email copy only when it is enabled globally, in the rule and by the user', async () => {
     await Settings.updateOne({ _id: 'global' }, { $set: { emailEnabled: true } });
-    const { NotificationRule } = await import('../../src/modules/notifications/notificationRule.model.js');
     await NotificationRule.updateOne({ isDefault: true }, { $set: { channels: ['TEAMS_CHAT', 'TEAMS_CHANNEL', 'EMAIL'] } });
     const occ = await occurrence('2026-09-25', { lastEscalationLevel: 1 }); // 10-05 = D+10 → N2
     await runDailyNotifications('2026-10-05');

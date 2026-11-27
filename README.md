@@ -100,9 +100,9 @@ Llega solo si se cumplen las tres: **Configuración → «Permitir copia por cor
 ## Producción
 
 ```bash
-cd frontend && npm ci && npm run build      # nginx sirve frontend/dist y hace proxy de /api → 127.0.0.1:3045
+cd frontend && npm ci && npm run build      # audit-web sirve frontend/dist en :5190 (vite preview) y hace proxy de /api → 127.0.0.1:3045
 cd backend  && npm ci --omit=dev
-pm2 start ecosystem.config.cjs && pm2 save && pm2 startup     # audit-api + audit-worker (una sola instancia)
+pm2 start ecosystem.config.mjs && pm2 save && pm2 startup     # audit-api + audit-worker (una sola instancia) + audit-web; la app queda en http://<servidor>:5190
 ```
 En producción el API no arranca sin `TEAMS_2FA_WEBHOOK_URL`. `GET /api/v1/health` informa `worker: degraded` si el envío diario no corre en 26 h.
 
